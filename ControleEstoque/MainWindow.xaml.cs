@@ -456,19 +456,24 @@ namespace ControleEstoque
         {
             try
             {
-                MessageBoxResult dr = MessageBox.Show("Deseja realizar a venda conforme as informações abaixo?" + "\n\r" + "Código: " + codigo_Simular_Venda.Text + "\n\r" + "Nome: " + nome_Simular_Venda.Text + "\n\r" + "Preço: " + preco_Simular_Venda.Text + "\n\r" + "Quantidade: " + quantidade_Simular_Venda.Text, "Confirmação", MessageBoxButton.OKCancel);
-                switch (dr)
+                Produto produtoAnterior = (Produto)stockView_Simular_Venda.SelectedItem;
+                Produto produto = DalHelper.GetProduto_Codigo(Convert.ToInt32(codigo_Simular_Venda.Text));
+                Produto? p = stockView_Simular_Venda.SelectedItem as Produto;
+                if (p.Quantidade == 0)
                 {
-                    case MessageBoxResult.OK:
-                        Produto produtoAnterior = (Produto)stockView_Simular_Venda.SelectedItem;
-                        Produto produto = DalHelper.GetProduto_Codigo(Convert.ToInt32(codigo_Simular_Venda.Text));
-                        
-
-                            if (quantidade_Simular_Venda.Text == null)
+                    MessageBox.Show("O produto não possui estoque para realizar a venda.");
+                }
+                else
+                {
+                    MessageBoxResult dr = MessageBox.Show("Deseja realizar a venda conforme as informações abaixo?" + "\n\r" + "Código: " + codigo_Simular_Venda.Text + "\n\r" + "Nome: " + nome_Simular_Venda.Text + "\n\r" + "Preço: " + preco_Simular_Venda.Text + "\n\r" + "Quantidade: " + quantidade_Simular_Venda.Text, "Confirmação", MessageBoxButton.OKCancel);
+                    switch (dr)
+                    {
+                        case MessageBoxResult.OK:
+                            if (quantidade_Simular_Venda.Text == "")
                             {
                                 MessageBox.Show("Digite a quantidade para realizar a venda.");
                             }
-                            else if (quantidade_Simular_Venda.Text != null)
+                            else if (quantidade_Simular_Venda.Text != "")
                             {
                                 int quantidade = produto.Quantidade - Convert.ToInt32(quantidade_Simular_Venda.Text);
                                 if (quantidade >= 0)
@@ -483,18 +488,23 @@ namespace ControleEstoque
                                     preco_Simular_Venda.Text = "";
                                     quantidade_Simular_Venda.Text = "";
                                     stockView_Simular_Venda.ItemsSource = "";
+                                }
+                                else
+                                {
+                                    MessageBox.Show("Venda não realizada, a quantidade informada é superior à disponível em estoque.");
+                                }
                             }
-                            }
-                        break;
-                    case MessageBoxResult.Cancel:
-                        MessageBox.Show("Venda não realizada, insira as informações novamente.");
-                        codigo_Simular_Venda.Text = "";
-                        nome_Simular_Venda.Text = "";
-                        preco_Simular_Venda.Text = "";
-                        quantidade_Simular_Venda.Text = "";
-                        stockView_Simular_Venda.ItemsSource = "";
-                        break;
-                }   
+                            break;
+                        case MessageBoxResult.Cancel:
+                            MessageBox.Show("Venda não realizada, insira as informações novamente.");
+                            codigo_Simular_Venda.Text = "";
+                            nome_Simular_Venda.Text = "";
+                            preco_Simular_Venda.Text = "";
+                            quantidade_Simular_Venda.Text = "";
+                            stockView_Simular_Venda.ItemsSource = "";
+                            break;
+                    }
+                }
             }
             catch (Exception ex)
             {
