@@ -2,7 +2,7 @@
 
 namespace ControleEstoque.Models
 {
-    public class Venda
+    public class Venda : BaseModel
     {
         public int codigo { get; set; }
         public Produto produto { get; set; }

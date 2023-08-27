@@ -11,7 +11,7 @@ using System.Windows.Documents;
 
 namespace ControleEstoque.Models
 {
-    public class DalHelper
+    public class DalHelper : BaseModel
     {
         private static SQLiteConnection sqliteConnection;
 

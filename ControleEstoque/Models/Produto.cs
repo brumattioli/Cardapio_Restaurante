@@ -9,7 +9,7 @@ namespace ControleEstoque.Models
     /// <summary>
     /// Classe que armazena os atributos dos objetos do tipo Produto
     /// </summary>
-    public class Produto
+    public class Produto : BaseModel
     {
         public string Nome { get; set; }
         public int Codigo { get; set; }
