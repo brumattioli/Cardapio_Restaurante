@@ -81,63 +81,7 @@ namespace ControleEstoque.Models
                 throw ex;
             }
         }
-
-        /// <summary>
-        /// Classe que insere produtos no Banco de Dados
-        /// </summary>
-        /// <param name="product"></param>
-        public static void Add(Produto product)
-        {
-            try
-            {
-                using (var cmd = DbConnection().CreateCommand())
-                {
-                    cmd.CommandText = "INSERT INTO Produtos(Codigo, Nome, Preco, Quantidade, Status) values (@Codigo, @Nome, @Preco, @Quantidade, @Status)";
-                    cmd.Parameters.AddWithValue("@Codigo", product.Codigo);
-                    cmd.Parameters.AddWithValue("@Nome", product.Nome);
-                    cmd.Parameters.AddWithValue("@Preco", product.Preco);
-                    cmd.Parameters.AddWithValue("@Quantidade", product.Quantidade);
-                    cmd.Parameters.AddWithValue("@Status", "Ativo");
-                    cmd.ExecuteNonQuery();
-                }
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
         
-        /// <summary>
-        /// Classe que retorna todos os produtos cadastrados no Banco de Dados
-        /// </summary>
-        /// <returns></returns>
-        public static List<Produto> GetProdutos()
-        {
-            try
-            {
-                List<Produto> p = new List<Produto>();
-                using (var cmd = DbConnection().CreateCommand())
-                {
-                    cmd.CommandText = "SELECT * FROM Produtos";
-                    using SQLiteDataReader rdr = cmd.ExecuteReader();
-                    while (rdr.Read())
-                    {
-                        Produto op = new Produto();
-                        op.Codigo = rdr.GetInt32(0);
-                        op.Nome = rdr.GetString(1);
-                        op.Preco = rdr.GetDouble(2);
-                        op.Quantidade = rdr.GetInt32(3);
-                        op.Status = rdr.GetString(4);
-                        p.Add(op);
-                    }
-                    return p;
-                }
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
         /// <summary>
         /// Classe que retorna os produtos no Banco de Dados a partir do nome do produto
         /// </summary>
@@ -217,84 +161,6 @@ namespace ControleEstoque.Models
                         cmd.CommandText = "UPDATE Produtos SET Quantidade=@Quantidade WHERE Codigo=@Codigo";
                         cmd.Parameters.AddWithValue("@Codigo", produto.Codigo);
                         cmd.Parameters.AddWithValue("@Quantidade", produto.Quantidade);
-                        cmd.ExecuteNonQuery();
-                    }
-                };
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-        /// <summary>
-        /// Classe que atualiza o preço de produtos no Banco de Dados a partir do Código do produto
-        /// </summary>
-        /// <param name="produto"></param>
-        /// <param name="produtoAnterior"></param>
-        public static void Update_Preco(Produto produto, Produto produtoAnterior)
-        {
-            try
-            {
-                using (var cmd = new SQLiteCommand(DbConnection()))
-                {
-
-                    if (produto.Codigo != null && produto.Preco != produtoAnterior.Preco)
-                    {
-                        cmd.CommandText = "UPDATE Produtos SET Preco=@Preco WHERE Codigo=@Codigo";
-                        cmd.Parameters.AddWithValue("@Codigo", produto.Codigo);
-                        cmd.Parameters.AddWithValue("@Preco", produto.Preco);
-                        cmd.ExecuteNonQuery();
-                    }
-                };
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-        /// <summary>
-        /// Classe que atualiza o nome de produtos no Banco de Dados a partir do Código do produto
-        /// </summary>
-        /// <param name="produto"></param>
-        /// <param name="produtoAnterior"></param>
-        public static void Update_Nome(Produto produto, Produto produtoAnterior)
-        {
-            try
-            {
-                using (var cmd = new SQLiteCommand(DbConnection()))
-                {
-
-                    if (produto.Codigo != null && produto.Nome != produtoAnterior.Nome)
-                    {
-                        cmd.CommandText = "UPDATE Produtos SET Nome=@Nome WHERE Codigo=@Codigo";
-                        cmd.Parameters.AddWithValue("@Codigo", produto.Codigo);
-                        cmd.Parameters.AddWithValue("@Nome", produto.Nome);
-                        cmd.ExecuteNonQuery();
-                    }
-                };
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-        /// <summary>
-        /// Classe que remove produtos no Banco de Dados a partir do Código do produto
-        /// </summary>
-        /// <param name="produto"></param>
-        public static void Remover_Item(Produto produto)
-        {
-            try
-            {
-                using (var cmd = new SQLiteCommand(DbConnection()))
-                {
-
-                    if (produto.Codigo != null)
-                    {
-                        cmd.CommandText = "UPDATE Produtos SET Status=@Status, Quantidade=@Quantidade WHERE Codigo=@Codigo";
-                        cmd.Parameters.AddWithValue("@Codigo", produto.Codigo);
-                        cmd.Parameters.AddWithValue("@Quantidade", 0);
-                        cmd.Parameters.AddWithValue("@Status", "Inativo");
                         cmd.ExecuteNonQuery();
                     }
                 };

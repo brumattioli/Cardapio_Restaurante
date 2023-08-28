@@ -1,4 +1,5 @@
-﻿using ControleEstoque.Models;
+﻿using ControleEstoque.Controller;
+using ControleEstoque.Models;
 using OfficeOpenXml.FormulaParsing.Excel.Functions.Math;
 using System;
 using System.Collections.Generic;
@@ -71,22 +72,8 @@ namespace ControleEstoque
                 switch (dr)
                 {
                     case MessageBoxResult.OK:
-                        Produto produtoBD = new Produto();
-                        produtoBD.Codigo = Convert.ToInt32(codigo_Cadastrar.Text);
-                        Produto p = DalHelper.GetProduto_Codigo(produtoBD.Codigo);
-                        if (p.Codigo == 0)
-                        {
-                            p = new Produto();
-                            p.Codigo = Convert.ToInt32(codigo_Cadastrar.Text);
-                            p.Nome = nome_Cadastrar.Text;
-                            p.Preco = Convert.ToDouble(preco_Cadastrar.Text);
-                            p.Quantidade = Convert.ToInt32(quantidade_Cadastrar.Text);
-                            DalHelper.Add(p);
-                            MessageBox.Show("Produto cadastrado com sucesso!");
-                            emptyBoxesReg();
-                            break;
-                        }
-                        else MessageBox.Show("Código já existente no Banco de Dados!");
+                        ProdutoController pControl = new ProdutoController();
+                        MessageBox.Show(pControl.cadastrarProduto(Convert.ToInt32(codigo_Cadastrar.Text), nome_Cadastrar.Text, Convert.ToDouble(preco_Cadastrar.Text), Convert.ToInt32(quantidade_Cadastrar.Text)));
                         break;
                     case MessageBoxResult.Cancel:
                         MessageBox.Show("Produto não cadastrado, insira as informações novamente.");
@@ -109,8 +96,7 @@ namespace ControleEstoque
         {
             try
             {
-                List<Produto> l = DalHelper.GetProdutos();
-                stockView_Buscar.ItemsSource = l;
+                stockView_Buscar.ItemsSource = ProdutoController.listarProdutos();
             }
             catch (Exception ex)
             {
@@ -252,25 +238,23 @@ namespace ControleEstoque
         /// <param name="e"></param>
         private void filterButton_Buscar_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(codigoBusca_Buscar.Text) && string.IsNullOrEmpty(nomeBusca_Buscar.Text))
-            {
-                MessageBox.Show("Informe o código ou o nome do produto a ser localizado");
-                return;
-            }
             try
             {
-                if (!string.IsNullOrEmpty(codigoBusca_Buscar.Text))
+                if (string.IsNullOrEmpty(codigoBusca_Buscar.Text) && string.IsNullOrEmpty(nomeBusca_Buscar.Text))
                 {
-                    int Codigo = Convert.ToInt32(codigoBusca_Buscar.Text);
-                    List<Produto> l = new List<Produto>();
-                    l.Add(DalHelper.GetProduto_Codigo(Codigo));
-                    stockView_Buscar.ItemsSource = l;
+                    MessageBox.Show("Informe o código ou o nome do produto a ser localizado");
                 }
                 else
                 {
-                    string Nome = nomeBusca_Buscar.Text;
-                    List<Produto> l = DalHelper.GetProduto_Nome(Nome);
-                    stockView_Buscar.ItemsSource = l;
+                    if (!string.IsNullOrEmpty(codigoBusca_Buscar.Text))
+                    {
+                        int Codigo = Convert.ToInt32(codigoBusca_Buscar.Text);
+                        stockView_Buscar.ItemsSource = ProdutoController.listarProdutosCodigo(Codigo);
+                    }
+                    else
+                    {
+                        stockView_Buscar.ItemsSource = ProdutoController.listarProdutosNome(nomeBusca_Buscar.Text);
+                    }
                 }
             }
             catch (Exception ex)
@@ -309,15 +293,11 @@ namespace ControleEstoque
                 if (!string.IsNullOrEmpty(codigoBusca_Editar.Text))
                 {
                     int Codigo = Convert.ToInt32(codigoBusca_Editar.Text);
-                    List<Produto> l = new List<Produto>();
-                    l.Add(DalHelper.GetProduto_Codigo(Codigo));
-                    stockView_Editar.ItemsSource = l;
+                    stockView_Editar.ItemsSource = ProdutoController.listarProdutosCodigo(Codigo);
                 }
                 else
                 {
-                    string Nome = nomeBusca_Editar.Text;
-                    List<Produto> l = DalHelper.GetProduto_Nome(Nome);
-                    stockView_Editar.ItemsSource = l;
+                    stockView_Editar.ItemsSource = ProdutoController.listarProdutosNome(nomeBusca_Editar.Text);
                 }
             }
             catch (Exception ex)
@@ -325,12 +305,6 @@ namespace ControleEstoque
                 MessageBox.Show("Erro : " + ex.Message);
             }
         }
-
-        //private void Selecionar_Item(object sender, RoutedEventArgs e)
-        //{
-        //    Produto produtoAnterior = (Produto)stockView_Editar.SelectedItem;
-
-        //}
 
         /// <summary>
         /// Botão que faz a edição/atualização de dados no Banco de Dados
@@ -353,31 +327,19 @@ namespace ControleEstoque
                         MessageBox.Show("Para editar um produto, você precisa informar um novo nome, quantidade ou preço para o item.");
                         codigo_Editar.Text = "";
                     }
-                    Produto produtoAnterior = (Produto)stockView_Editar.SelectedItem;
-                    Produto produto = new Produto();
-
-                    if (quantidade_Editar.Text != "")
+                    else
                     {
-                        produto.Codigo = Convert.ToInt32(produtoAnterior.Codigo);
-                        produto.Quantidade = Convert.ToInt32(quantidade_Editar.Text);
-                        DalHelper.Update_Quantidade(produto, produtoAnterior);
-                        MessageBox.Show("A quantidade do produto foi atualizada!");
+                        string mensagem = string.Empty;
+                        if (!string.IsNullOrEmpty(quantidade_Editar.Text))
+                            mensagem = ProdutoController.editarQuantidade(Convert.ToInt32(codigo_Editar.Text), Convert.ToInt32(quantidade_Editar.Text));
+                        if (!string.IsNullOrEmpty(nome_Editar.Text))
+                            mensagem += ProdutoController.editarNome(Convert.ToInt32(codigo_Editar.Text), nome_Editar.Text);
+                        if (!string.IsNullOrEmpty(preco_Editar.Text))
+                            mensagem += ProdutoController.editarPreco(Convert.ToInt32(codigo_Editar.Text), Convert.ToDouble(preco_Editar.Text));
+                        
+                        MessageBox.Show(mensagem);
+                        filterButton_Editar_Click(sender, e);
                     }
-                    if (nome_Editar.Text != "")
-                    {
-                        produto.Codigo = Convert.ToInt32(produtoAnterior.Codigo);
-                        produto.Nome = nome_Editar.Text;
-                        DalHelper.Update_Nome(produto, produtoAnterior);
-                        MessageBox.Show("O nome do produto foi atualizado!");
-                    }
-                    if (preco_Editar.Text != "")
-                    {
-                        produto.Codigo = Convert.ToInt32(produtoAnterior.Codigo);
-                        produto.Preco = Convert.ToDouble(preco_Editar.Text);
-                        DalHelper.Update_Preco(produto, produtoAnterior);
-                        MessageBox.Show("O preço do produto foi atualizado!");
-                    }
-                    filterButton_Editar_Click(sender, e);
                 }
             }
             catch (Exception ex)
@@ -400,10 +362,9 @@ namespace ControleEstoque
                 }
                 else
                 {
-                    Produto produto = (Produto)stockView_Remover.SelectedItem;
-                    produto.Codigo = Convert.ToInt32(produto.Codigo);
-                    DalHelper.Remover_Item(produto);
-                    MessageBox.Show("O produto de código " + produto.Codigo + " foi removido com sucesso!");
+                    Produto p = (Produto)stockView_Remover.SelectedItem;
+                    MessageBox.Show(ProdutoController.removerProdutos(p.Codigo));
+                    stockView_Remover.ItemsSource = "";
                 }
             }
             catch (Exception ex)
@@ -429,15 +390,11 @@ namespace ControleEstoque
                 if (!string.IsNullOrEmpty(codigoBusca_Remover.Text))
                 {
                     int Codigo = Convert.ToInt32(codigoBusca_Remover.Text);
-                    List<Produto> l = new List<Produto>();
-                    l.Add(DalHelper.GetProduto_Codigo(Codigo));
-                    stockView_Remover.ItemsSource = l;
+                    stockView_Remover.ItemsSource = ProdutoController.listarProdutosCodigo(Codigo);
                 }
                 else
                 {
-                    string Nome = nomeBusca_Remover.Text;
-                    List<Produto> l = DalHelper.GetProduto_Nome(Nome);
-                    stockView_Remover.ItemsSource = l;
+                    stockView_Remover.ItemsSource = ProdutoController.listarProdutosNome(nomeBusca_Remover.Text);
                 }
             }
             catch (Exception ex)
@@ -456,53 +413,59 @@ namespace ControleEstoque
         {
             try
             {
-                Produto produtoAnterior = (Produto)stockView_Simular_Venda.SelectedItem;
-                Produto produto = DalHelper.GetProduto_Codigo(Convert.ToInt32(codigo_Simular_Venda.Text));
-                Produto? p = stockView_Simular_Venda.SelectedItem as Produto;
-                if (p.Quantidade == 0)
-                {
-                    MessageBox.Show("O produto não possui estoque para realizar a venda.");
-                }
+                if (codigo_Simular_Venda.Text == "" && preco_Simular_Venda.Text == "" && quantidade_Simular_Venda.Text == "" && nome_Simular_Venda.Text == "")
+                    MessageBox.Show("Selecione um item para realizar a venda.");
                 else
                 {
-                    MessageBoxResult dr = MessageBox.Show("Deseja realizar a venda conforme as informações abaixo?" + "\n\r" + "Código: " + codigo_Simular_Venda.Text + "\n\r" + "Nome: " + nome_Simular_Venda.Text + "\n\r" + "Preço: " + preco_Simular_Venda.Text + "\n\r" + "Quantidade: " + quantidade_Simular_Venda.Text, "Confirmação", MessageBoxButton.OKCancel);
-                    switch (dr)
+                    Produto produtoAnterior = (Produto)stockView_Simular_Venda.SelectedItem;
+                    Produto produto = DalHelper.GetProduto_Codigo(Convert.ToInt32(codigo_Simular_Venda.Text));
+                    Produto? p = stockView_Simular_Venda.SelectedItem as Produto;
+
+                    if (p.Quantidade == 0)
                     {
-                        case MessageBoxResult.OK:
-                            if (quantidade_Simular_Venda.Text == "")
-                            {
-                                MessageBox.Show("Digite a quantidade para realizar a venda.");
-                            }
-                            else if (quantidade_Simular_Venda.Text != "")
-                            {
-                                int quantidade = produto.Quantidade - Convert.ToInt32(quantidade_Simular_Venda.Text);
-                                if (quantidade >= 0)
+                        MessageBox.Show("O produto não possui estoque para realizar a venda.");
+                    }
+                    else
+                    {
+                        MessageBoxResult dr = MessageBox.Show("Deseja realizar a venda conforme as informações abaixo?" + "\n\r" + "Código: " + codigo_Simular_Venda.Text + "\n\r" + "Nome: " + nome_Simular_Venda.Text + "\n\r" + "Preço: " + preco_Simular_Venda.Text + "\n\r" + "Quantidade: " + quantidade_Simular_Venda.Text, "Confirmação", MessageBoxButton.OKCancel);
+                        switch (dr)
+                        {
+                            case MessageBoxResult.OK:
+                                if (quantidade_Simular_Venda.Text == "")
                                 {
-                                    produto.Codigo = Convert.ToInt32(produtoAnterior.Codigo);
-                                    produto.Quantidade = produto.Quantidade - Convert.ToInt32(quantidade_Simular_Venda.Text);
-                                    DalHelper.Update_Quantidade(produto, produtoAnterior);
-                                    string cd = DalHelper.Add_Venda(produto);
-                                    MessageBox.Show("A venda foi realizada! Venda código " + cd + "!");
-                                    codigo_Simular_Venda.Text = "";
-                                    nome_Simular_Venda.Text = "";
-                                    preco_Simular_Venda.Text = "";
-                                    quantidade_Simular_Venda.Text = "";
-                                    stockView_Simular_Venda.ItemsSource = "";
+                                    MessageBox.Show("Digite a quantidade para realizar a venda.");
                                 }
-                                else
+                                else if (quantidade_Simular_Venda.Text != "")
                                 {
-                                    MessageBox.Show("Venda não realizada, a quantidade informada é superior à disponível em estoque.");
+                                    int quantidade = produto.Quantidade - Convert.ToInt32(quantidade_Simular_Venda.Text);
+                                    if (quantidade >= 0)
+                                    {
+                                        produto.Codigo = Convert.ToInt32(produtoAnterior.Codigo);
+                                        produto.Quantidade = produto.Quantidade - Convert.ToInt32(quantidade_Simular_Venda.Text);
+                                        DalHelper.Update_Quantidade(produto, produtoAnterior);
+                                        string cd = DalHelper.Add_Venda(produto);
+                                        MessageBox.Show("A venda foi realizada! Venda código " + cd + "!");
+                                        codigo_Simular_Venda.Text = "";
+                                        nome_Simular_Venda.Text = "";
+                                        preco_Simular_Venda.Text = "";
+                                        quantidade_Simular_Venda.Text = "";
+                                        stockView_Simular_Venda.ItemsSource = "";
+                                    }
+                                    else
+                                    {
+                                        MessageBox.Show("Venda não realizada, a quantidade informada é superior à disponível em estoque.");
+                                    }
                                 }
-                            }
-                            break;
-                        case MessageBoxResult.Cancel:
-                            MessageBox.Show("Venda não realizada, insira as informações novamente.");
-                            codigo_Simular_Venda.Text = "";
-                            nome_Simular_Venda.Text = "";
-                            preco_Simular_Venda.Text = "";
-                            quantidade_Simular_Venda.Text = "";
-                            stockView_Simular_Venda.ItemsSource = "";
-                            break;
+                                break;
+                            case MessageBoxResult.Cancel:
+                                MessageBox.Show("Venda não realizada, insira as informações novamente.");
+                                codigo_Simular_Venda.Text = "";
+                                nome_Simular_Venda.Text = "";
+                                preco_Simular_Venda.Text = "";
+                                quantidade_Simular_Venda.Text = "";
+                                stockView_Simular_Venda.ItemsSource = "";
+                                break;
+                        }
                     }
                 }
             }
@@ -514,9 +477,14 @@ namespace ControleEstoque
         private void getItem(object sender, MouseButtonEventArgs e)
         {
             Produto? p = stockView_Simular_Venda.SelectedItem as Produto;
-            codigo_Simular_Venda.Text = p.Codigo.ToString();
-            nome_Simular_Venda.Text = p.Nome.ToString();
-            preco_Simular_Venda.Text = p.Preco.ToString();
+            if (p != null)
+            {
+                codigo_Simular_Venda.Text = p.Codigo.ToString();
+                nome_Simular_Venda.Text = p.Nome.ToString();
+                preco_Simular_Venda.Text = p.Preco.ToString();
+            }
+            else
+                MessageBox.Show("Por favor, selecione um item.");
         }
 
         /// <summary>
@@ -610,7 +578,10 @@ namespace ControleEstoque
         private void getItem_Editar(object sender, MouseButtonEventArgs e)
         {
             Produto? p = stockView_Editar.SelectedItem as Produto;
-            codigo_Editar.Text = p.Codigo.ToString();
+            if (p != null)
+                codigo_Editar.Text = p.Codigo.ToString();
+            else
+                MessageBox.Show("Por favor, selecione um produto.");
         }
     }
 }
